@@ -97,7 +97,7 @@ Spotify ve YouTube için geliştirici uygulama kimlikleri gerekir; `.env.example
 
 ### Yayınlama
 
-Depo, `main` dalına her gönderimde GitHub Pages'e yayın yapan bir iş akışı içerir (`.github/workflows/deploy.yml`). İlk sefer için **Settings › Pages › Source: GitHub Actions** seçin. Spotify/Google kimliklerini **Settings › Secrets and variables › Actions › Variables** altında `SPOTIFY_CLIENT_ID` ve `GOOGLE_CLIENT_ID` olarak tanımlayabilirsiniz (gizli değildir).
+Depo, `main` dalına her gönderimde derleyip `gh-pages` dalına yayın yapan bir iş akışı içerir (`.github/workflows/deploy.yml`). Pages kaynağı **Settings › Pages › Deploy from a branch › `gh-pages` / (root)** olmalıdır. Spotify/Google kimliklerini **Settings › Secrets and variables › Actions › Variables** altında `SPOTIFY_CLIENT_ID` ve `GOOGLE_CLIENT_ID` olarak tanımlayabilirsiniz (gizli değildir).
 
 ## Nasıl çalışır?
 
