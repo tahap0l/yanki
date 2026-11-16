@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: ffmpeg (analiz testi MP3 çözer)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+      - run: npm ci
+      - name: Tür denetimi
+        run: npm run typecheck
+      - name: Analiz doğruluğu + bağlantı ayrıştırıcı
+        run: npm test
+      - name: Üretim derlemesi
+        run: npx vite build

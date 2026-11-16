@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "tracks": [
+    {
+      "id": "gece-golu",
+      "title": "Gece Gölü",
+      "artist": "Yankı Demo",
+      "src": "../demo/gece-golu.mp3",
+      "duration": 92.9,
+      "bpmHint": "88 BPM · davulsuz giriş",
+      "scene": "moonlight",
+      "description": "16 saniyelik davulsuz giriş, ardından senkoplu bas vuruşları.",
+      "license": { "name": "CC0 1.0", "holder": "Bu uygulama için özgün olarak üretildi", "url": "https://creativecommons.org/publicdomain/zero/1.0/" },
+      "rights": { "playback": true, "analysis": true, "visualSync": true, "verifiedBy": "Yankı katalog ekibi", "verifiedAt": "2026-11-16" }
+    },
+    {
+      "id": "kuzey-ruzgari",
+      "title": "Kuzey Rüzgârı",
+      "artist": "Yankı Demo",
+      "src": "../demo/kuzey-ruzgari.mp3",
+      "duration": 107.8,
+      "bpmHint": "122 BPM · bölüm ve ton değişimleri",
+      "scene": "aurora",
+      "description": "Giriş, tema, ara ve zirve bölümleri; zirvede ton değişir.",
+      "license": { "name": "CC0 1.0", "holder": "Bu uygulama için özgün olarak üretildi", "url": "https://creativecommons.org/publicdomain/zero/1.0/" },
+      "rights": { "playback": true, "analysis": true, "visualSync": true, "verifiedBy": "Yankı katalog ekibi", "verifiedAt": "2026-11-16" }
+    },
+    {
+      "id": "toz-bulutu",
+      "title": "Toz Bulutu",
+      "artist": "Yankı Demo",
+      "src": "../demo/toz-bulutu.mp3",
+      "duration": 95.1,
+      "bpmHint": "96→116 BPM · hızlanan, senkoplu",
+      "scene": "stardust",
+      "description": "Tempo parça boyunca hızlanır; ölçü başları belirgin.",
+      "license": { "name": "CC0 1.0", "holder": "Bu uygulama için özgün olarak üretildi", "url": "https://creativecommons.org/publicdomain/zero/1.0/" },
+      "rights": { "playback": true, "analysis": true, "visualSync": true, "verifiedBy": "Yankı katalog ekibi", "verifiedAt": "2026-11-16" }
+    }
+  ]
+}

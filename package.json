@@ -1,0 +1,51 @@
+{
+  "name": "yanki",
+  "version": "1.0.0",
+  "description": "Müziği sinematik, etkileşimli bir görsel dünyaya dönüştüren web uygulaması — ses analizi, WebGL 2 sahneler, Spotify ve YouTube kütüphanesi.",
+  "author": "Esat Taha Polat (https://github.com/tahap0l)",
+  "license": "MIT",
+  "homepage": "https://tahap0l.github.io/yanki/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tahap0l/yanki.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tahap0l/yanki/issues"
+  },
+  "keywords": [
+    "music-visualizer",
+    "web-audio",
+    "webgl2",
+    "beat-tracking",
+    "spotify",
+    "youtube",
+    "typescript",
+    "vite"
+  ],
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc",
+    "test": "tsx test/eval.ts && tsx test/links.ts",
+    "test:analysis": "tsx test/eval.ts",
+    "test:links": "tsx test/links.ts",
+    "test:browser": "python3 test/browser_full.py",
+    "test:services": "python3 test/services.py",
+    "demos": "node scripts/make-demos.mjs"
+  },
+  "dependencies": {
+    "@fontsource/instrument-serif": "^5.3.0",
+    "@fontsource/inter": "^5.3.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "vite": "^6.4.6"
+  }
+}
