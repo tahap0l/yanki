@@ -12,6 +12,7 @@ import { YouTubeEmbed } from '../sources/YouTubeEmbed';
 import { loadPrefs, savePrefs, type Prefs } from './prefs';
 import { BeatStrip } from './BeatStrip';
 import { Library } from './Library';
+import { Pwa } from './Pwa';
 import { SpotifyAuth } from '../services/spotify/SpotifyAuth';
 import { SpotifyApi } from '../services/spotify/SpotifyApi';
 import { SpotifyPlayback } from '../services/spotify/SpotifyPlayback';
@@ -52,6 +53,7 @@ export class App {
   private gAuth = new GoogleAuth();
   private ytApi = new YouTubeApi(this.gAuth);
   private library!: Library;
+  private pwa = new Pwa();
   private lastTrackKey = '';
   private streamNote = '';
   private strip: BeatStrip;
@@ -89,6 +91,7 @@ export class App {
     });
     this.bindUi();
     this.bindAudio();
+    this.setupPwa();
     void this.spAuth.handleRedirect().then((r) => {
       if (r === 'connected') { this.toast('Spotify bağlandı.'); this.openLibrary('spotify'); }
       else if (r?.startsWith('error:')) { this.toast(r.slice(6)); this.openLibrary('spotify'); }
@@ -763,6 +766,53 @@ export class App {
     }
   }
 
+  // ---------------- yüklenebilir uygulama ----------------
+  private setupPwa(): void {
+    const btn = $('installBtn');
+    const render = () => {
+      const st = this.pwa.state;
+      let dismissed = false;
+      try { dismissed = localStorage.getItem('yanki.install.dismissed') === '1'; } catch { /* yoksay */ }
+      btn.hidden = st === 'installed' || st === 'unsupported' || (st === 'ios' && dismissed);
+    };
+    this.pwa.onChange = render;
+    this.pwa.onInstalled = () => this.toast('Yankı yüklendi. Ana ekranınızdan açabilirsiniz.');
+    this.pwa.onUpdate = () => { $('updateBar').hidden = false; };
+    $('updateBtn').addEventListener('click', () => { ($('updateBtn') as HTMLButtonElement).disabled = true; this.pwa.applyUpdate(); });
+    btn.addEventListener('click', async () => {
+      if (this.pwa.state === 'prompt') {
+        const ok = await this.pwa.install();
+        if (!ok) this.toast('Yükleme iptal edildi. İstediğiniz zaman bu düğmeyle yükleyebilirsiniz.');
+        return;
+      }
+      this.showInstallHelp();
+    });
+    render();
+    void this.pwa.register();
+    // kısayollardan açılış (?open=library | device)
+    const open = new URLSearchParams(location.search).get('open');
+    if (open === 'library' || open === 'device') {
+      history.replaceState(null, '', location.pathname);
+      setTimeout(() => this.openLibrary(open === 'device' ? 'device' : 'spotify'), 50);
+    }
+  }
+
+  private showInstallHelp(): void {
+    const ol = $('installSteps');
+    ol.replaceChildren();
+    const ua = navigator.userAgent;
+    const steps = this.pwa.isIos
+      ? (/CriOS|FxiOS|EdgiOS/.test(ua)
+        ? ['Bu sayfayı Safari’de açın (iPhone ve iPad’de uygulama yalnız Safari’den yüklenir).', 'Alttaki Paylaş düğmesine dokunun.', '“Ana Ekrana Ekle”yi seçin, sonra “Ekle”ye dokunun.']
+        : ['Safari’de alttaki (iPad’de üstteki) Paylaş düğmesine dokunun.', 'Listeyi kaydırıp “Ana Ekrana Ekle”yi seçin.', '“Ekle”ye dokunun; Yankı ana ekranınızda belirir.'])
+      : ['Tarayıcı menüsünü açın (⋮ ya da ⋯).', '“Uygulamayı yükle” ya da “Ana ekrana ekle”yi seçin.', 'Onaylayın; Yankı kendi penceresinde açılır.'];
+    for (const t of steps) { const li = document.createElement('li'); li.textContent = t; ol.append(li); }
+    this.closePanels(false);
+    $('installPanel').hidden = false;
+    $('installBtn').setAttribute('aria-expanded', 'true');
+    ($('installPanel').querySelector('[data-close]') as HTMLElement).focus();
+  }
+
   openLibrary(tab: 'spotify' | 'youtube' | 'device'): void {
     this.closePanels(false);
     $('libraryPanel').hidden = false;
@@ -771,6 +821,11 @@ export class App {
   }
 
   private closePanels(restoreFocus = true): void {
+    if (!$('installPanel').hidden) {
+      $('installPanel').hidden = true;
+      $('installBtn').setAttribute('aria-expanded', 'false');
+      try { if (this.pwa.isIos) { localStorage.setItem('yanki.install.dismissed', '1'); $('installBtn').hidden = true; } } catch { /* yoksay */ }
+    }
     for (const [id, b] of [['settingsPanel', 'settingsBtn'], ['libraryPanel', 'libBtn']]) {
       const wasOpen = !$(id).hidden;
       const hadFocus = $(id).contains(document.activeElement);
@@ -845,7 +900,7 @@ export class App {
 
   private maybeIdle(): void {
     const app = $('app');
-    const panelsOpen = !$('settingsPanel').hidden || !$('libraryPanel').hidden;
+    const panelsOpen = !$('settingsPanel').hidden || !$('libraryPanel').hidden || !$('installPanel').hidden;
     // yalnız klavye odağı (focus-visible) kontrolleri açık tutar; fare tıklaması tutmaz
     const ae = document.activeElement as HTMLElement | null;
     let kbFocus = false;

@@ -8,7 +8,14 @@
   <meta name="description" content="Yankı — müziği sinematik, etkileşimli bir görsel dünyaya dönüştürür.">
   <title>Yankı — Müziğin sahnesi</title>
   <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="icon" href="./icons/icon-192.png" type="image/png" sizes="192x192">
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
   <link rel="manifest" href="./manifest.webmanifest">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Yankı">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="application-name" content="Yankı">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.youtube.com https://sdk.scdn.co https://accounts.google.com/gsi/client; frame-src https://www.youtube.com https://www.youtube-nocookie.com https://sdk.scdn.co https://accounts.google.com; worker-src 'self' blob:; img-src 'self' data: blob: https://i.ytimg.com https://*.scdn.co https://*.spotifycdn.com https://*.ggpht.com https://*.googleusercontent.com; media-src 'self' blob:; style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style; font-src 'self'; connect-src 'self' https://api.spotify.com https://accounts.spotify.com https://www.googleapis.com https://accounts.google.com/gsi/; object-src 'none'; base-uri 'self'">
   <meta name="referrer" content="strict-origin-when-cross-origin">
 </head>
@@ -18,7 +25,13 @@
 
     <header class="topbar ui">
       <div class="brand"><span class="brand-mark" aria-hidden="true"></span><span class="brand-name">Yankı</span></div>
-      <div id="status" class="status" role="status" aria-live="polite"></div>
+      <div class="top-right">
+        <button type="button" class="install-btn" id="installBtn" aria-label="Uygulamayı yükle" aria-haspopup="dialog" hidden>
+          <svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16"><rect x="6" y="2.5" width="12" height="19" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 8.5v6M9 11.5h6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          <span>Uygulamayı yükle</span>
+        </button>
+        <div id="status" class="status" role="status" aria-live="polite"></div>
+      </div>
     </header>
 
     <section id="nowPlaying" class="now ui" aria-live="polite" hidden>
@@ -168,6 +181,20 @@
         <button type="button" class="ghost-btn small" id="cacheClear">Analiz önbelleğini temizle</button>
       </div>
       <p class="hint keys">Kısayollar: Boşluk oynat/duraklat · ←/→ 5 sn · 1/2/3 sahne · F tam ekran · [ ] vuruş kayması · T ritme dokun</p>
+    </div>
+
+    <div id="installPanel" class="sheet install-sheet" role="dialog" aria-modal="false" aria-labelledby="installTitle" hidden>
+      <div class="sheet-head">
+        <h2 id="installTitle">Yankı’yı yükle</h2>
+        <button type="button" class="icon-btn" data-close aria-label="Kapat"><svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+      </div>
+      <ol class="install-steps" id="installSteps"></ol>
+      <p class="hint">Yüklendikten sonra Yankı ana ekrandan kendi simgesiyle, tarayıcı çubukları olmadan açılır; demolar çevrimdışı da çalışır.</p>
+    </div>
+
+    <div id="updateBar" class="update-bar" role="status" hidden>
+      <span>Yankı’nın yeni sürümü hazır.</span>
+      <button type="button" class="primary-btn small" id="updateBtn">Yenile</button>
     </div>
 
     <div id="toast" class="toast" role="alert" hidden></div>

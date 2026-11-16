@@ -2,9 +2,9 @@
 
 # Yankı
 
-**Müziği sinematik, etkileşimli bir görsel dünyaya dönüştüren web uygulaması.**
+**Müziği sinematik, etkileşimli bir görsel dünyaya dönüştüren uygulama.**
 
-Telefon, iPad ve bilgisayarda çalışır. Kendi ses dosyalarınızı vuruşu vuruşuna analiz eder; Spotify ve YouTube kütüphanenizi tek bir ekranda açar.
+Telefona, iPad'e ve bilgisayara yüklenir; kendi simgesiyle tam ekran açılır, demolarla çevrimdışı da çalışır. Kendi ses dosyalarınızı vuruşu vuruşuna analiz eder; Spotify ve YouTube kütüphanenizi tek bir ekranda açar.
 
 [**Canlı demo →**](https://tahap0l.github.io/yanki/) · [English](README.en.md) · [Kurulum](docs/KURULUM.md) · [Mimari](docs/MIMARI.md) · [Ses analizi](docs/SES-ANALIZI.md)
 
@@ -20,6 +20,7 @@ Telefon, iPad ve bilgisayarda çalışır. Kendi ses dosyalarınızı vuruşu vu
 
 ## İçindekiler
 
+- [Uygulamayı yükle](#uygulamayı-yükle)
 - [Neler yapar?](#neler-yapar)
 - [Sahneler](#sahneler)
 - [Kaynaklar: dosya, Spotify, YouTube](#kaynaklar-dosya-spotify-youtube)
@@ -32,6 +33,20 @@ Telefon, iPad ve bilgisayarda çalışır. Kendi ses dosyalarınızı vuruşu vu
 - [Bilinen sınırlar](#bilinen-sınırlar)
 - [Yol haritası](#yol-haritası)
 - [Lisans](#lisans)
+
+## Uygulamayı yükle
+
+Yankı yüklenebilir bir uygulamadır (PWA): mağaza gerekmez, ana ekrana ya da bilgisayara kendi simgesiyle eklenir ve tarayıcı çubukları olmadan açılır.
+
+| Cihaz | Nasıl |
+|---|---|
+| **iPhone / iPad** | [tahap0l.github.io/yanki](https://tahap0l.github.io/yanki/) adresini **Safari**'de açın → **Paylaş** → **Ana Ekrana Ekle** → **Ekle** |
+| **Android** | Chrome'da açın → üstteki **Uygulamayı yükle** düğmesi (ya da ⋮ → **Uygulamayı yükle**) |
+| **Windows / Mac / Linux** | Chrome ya da Edge'de açın → **Uygulamayı yükle** düğmesi ya da adres çubuğundaki yükle simgesi |
+
+- **Çevrimdışı:** Yüklendikten sonra uygulama kabuğu ve bir kez çalınan demolar çevrimdışı çalışır.
+- **Güncellemeler:** Yeni sürüm yayınlandığında üstte **Yenile** düğmesi çıkar.
+- **Kısayollar:** Ana ekran simgesine uzun basınca “Kütüphane” ve “Demo parçalar” kısayolları görünür.
 
 ## Neler yapar?
 
@@ -170,7 +185,7 @@ src/
 ├─ sources/      bağlantı ayrıştırıcı, lisanslı katalog, YouTube oynatıcısı
 └─ app/          App (arayüz), Library (kütüphane paneli), BeatStrip, tercihler
 test/            analiz doğruluğu, tarayıcı ve servis testleri, sahte SDK'lar
-scripts/         demo parçaların sentezleyicisi
+scripts/         demo sentezleyici, simge kaynakları, service worker şablonu ve derleme eklentisi
 docs/            ayrıntılı belgeler ve ekran görüntüleri
 ```
 
@@ -182,6 +197,7 @@ docs/            ayrıntılı belgeler ve ekran görüntüleri
 | `test/links.ts` | Spotify/YouTube bağlantı biçimleri, katalog hak doğrulaması |
 | `test/browser_full.py` | Gerçek Chrome: senkron fazı, sarma, duraklatma, sekme dönüşü, iptal, elle hiza, önbellek, tam ekran |
 | `test/services.py` | OAuth PKCE, belirteç yenileme, Spotify API (Şubat 2026 biçimi), SDK ve Connect, YouTube; hata durumları |
+| `test/pwa.py` | Service worker, çevrimdışı açılış, önbellekten demo çalma ve sarma, iOS yükleme yardımı, yüklüyken gizlenen düğme |
 
 Ayrıntılı sonuçlar: [docs/TEST.md](docs/TEST.md)
 
@@ -197,7 +213,8 @@ Ayrıntılı sonuçlar: [docs/TEST.md](docs/TEST.md)
 
 - [ ] Gerçek iPhone, iPad ve Android cihazlarda kare süresi ve gecikme ölçümü
 - [ ] Albüm kapağından türetilen renk paleti (platform kurallarına uygunluk incelemesiyle)
-- [ ] PWA: çevrimdışı demo ve ana ekrana ekleme
+- [x] Yüklenebilir uygulama (PWA): ana ekrana ekleme, çevrimdışı demo
+- [ ] Mağaza paketleri (App Store / Play Store, Windows / Mac)
 - [ ] Dördüncü sahne ve sahne başına özelleştirme
 
 ## Lisans

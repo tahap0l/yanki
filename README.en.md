@@ -1,6 +1,6 @@
 # Yankı
 
-**A web app that turns music into a cinematic, interactive visual world.** Runs on phone, tablet and desktop. It analyzes your own audio files beat by beat and opens your Spotify and YouTube library in one place.
+**An installable app (PWA) that turns music into a cinematic, interactive visual world.** Install it on phone, tablet or desktop; it opens full screen with its own icon and plays the demos offline. It analyzes your own audio files beat by beat and opens your Spotify and YouTube library in one place.
 
 [Live demo](https://tahap0l.github.io/yanki/) · [Türkçe](README.md)
 

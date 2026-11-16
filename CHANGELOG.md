@@ -1,5 +1,16 @@
 # Değişiklik günlüğü
 
+## 1.1.0 — 2026-11-17
+
+### Eklenenler
+- **Yüklenebilir uygulama (PWA):** telefon, iPad ve bilgisayara kendi simgesiyle yükleme; bağımsız tam ekran pencere.
+- **Çevrimdışı çalışma:** uygulama kabuğu ve bir kez çalınan demolar internetsiz açılır; demo seslerinde sarma desteklenir.
+- **Yükleme ve güncelleme:** “Uygulamayı yükle” düğmesi (Chrome/Edge/Android istemi, iOS adımları); yeni sürüm için “Yenile” çubuğu; ana ekran kısayolları.
+
+### Düzeltilenler
+- **Yayın:** GitHub Pages yayını `gh-pages` dalı üzerinden; Pages ayarı açık değilken başarısız olmuyor.
+- **Canvas 2D Kutup Işıkları:** düşük kalitede bloklu çizim.
+
 ## 1.0.0 — 2026-11-17
 
 İlk sürüm.

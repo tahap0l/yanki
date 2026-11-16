@@ -148,6 +148,23 @@ Spotify ve YouTube aynı `PlaybackAdapter` arayüzünü uygular; taşıma çubu�
 
 Mobil tarayıcılarda ses ancak kullanıcı hareketiyle açılabildiği için Spotify oynatıcısı, kütüphane açılırken önceden hazırlanır. Böylece ilk dokunuşta `activateElement()` çağrılabilir.
 
+## Yüklenebilir uygulama (PWA)
+
+- **Manifest:** `public/manifest.webmanifest`. Bağımsız pencere (`standalone`, olanaklıysa `fullscreen`), maskelenebilir simge, ekran görüntüleri ve “Kütüphane / Demo parçalar” kısayolları.
+- **Service worker:** `scripts/pwa-plugin.ts`, derleme sonunda `scripts/sw-template.js`'ten `dist/sw.js` üretir. Önbelleğe alma listesi derlenen kabuk dosyalarından oluşur; sürüm, bu dosyaların ve şablonun içerik özetidir.
+- **Önbellek stratejisi:**
+
+| İstek | Strateji |
+|---|---|
+| Sayfa gezintisi | Önce ağ (Spotify'ın OAuth dönüşü bozulmasın), çevrimdışıysa kabuk |
+| JS, CSS, yazı tipleri, simgeler | Önbellek, yoksa ağ (`ignoreVary`: modül betikleri CORS kipinde istenir) |
+| `catalog.json` | Önce ağ, çevrimdışıysa önbellek |
+| Demo sesler | İlk çalışta önbelleğe; `Range` istekleri tam yanıttan 206 ile karşılanır (sarma çalışır) |
+| Spotify, Google, YouTube | Hiç dokunulmaz |
+
+- **Güncelleme:** Yeni service worker beklemeye geçince “Yenile” çubuğu gösterilir; dokunulunca `skipWaiting` → `controllerchange` → yeniden yükleme. Açık uygulama saatte bir güncelleme denetler.
+- **Yükleme düğmesi:** Chrome, Edge ve Android'de `beforeinstallprompt` ile sistem istemi açılır; iOS'ta Safari adımları gösterilir. Uygulama yüklü açıldığında (`display-mode: standalone`) düğme gizlenir.
+
 ## Güvenlik
 
 - **İçerik güvenlik politikası:** Yalnız gereken kaynaklara izin verilir; dize değerlendirmesi (`eval`) yasaktır.
