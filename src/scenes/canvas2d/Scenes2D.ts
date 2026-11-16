@@ -120,7 +120,8 @@ export class Aurora2D extends Base2D {
     this.curl += (target - this.curl) * (1 - Math.exp(-f.dt / 0.9));
     const gain = (0.5 + 0.55 * f.energy + 0.18 * f.beatPulse * f.sync) * (0.5 + 0.5 * f.intensity) * (1 - 0.3 * f.hush);
     c.globalCompositeOperation = 'lighter';
-    const step = Math.max(3, Math.round(6 / q.scale));
+    // tuval zaten kalite ölçeğinde küçültülmüş; şerit genişliği tuval pikselinde sabit kalmalı
+    const step = 2;
     const layers = q.level >= 3 ? 2 : 3;
     for (let L = 0; L < layers; L++) {
       const height = H * (0.16 + 0.12 * f.sectionEnergy) * (0.85 + 0.25 * L);
