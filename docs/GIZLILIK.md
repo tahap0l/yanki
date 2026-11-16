@@ -4,6 +4,7 @@ Yankı'nın sunucusu yoktur. Uygulama statik dosyalardan oluşur ve tüm işlem 
 
 | Veri | Nerede | Ne kadar süre |
 |---|---|---|
+| Mikrofon (Dinle) | Yalnız anlık frekans dağılımı hesaplanır; ses kaydedilmez, saklanmaz, gönderilmez | Dinle açıkken |
 | Açtığınız ses dosyası | Yalnız tarayıcı belleği; hiçbir yere yüklenmez | Sayfa açıkken |
 | Analiz sonuçları ve vuruş hizası | Bu cihazda IndexedDB (`yanki-analiz`) | En çok 40 parça; Ayarlar › Önbellek'ten silinebilir |
 | Görsel tercihleri | Bu cihazda `localStorage` | Siz silene kadar |

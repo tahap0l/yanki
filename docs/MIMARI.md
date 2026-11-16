@@ -148,6 +148,36 @@ Spotify ve YouTube aynı `PlaybackAdapter` arayüzünü uygular; taşıma çubu�
 
 Mobil tarayıcılarda ses ancak kullanıcı hareketiyle açılabildiği için Spotify oynatıcısı, kütüphane açılırken önceden hazırlanır. Böylece ilk dokunuşta `activateElement()` çağrılabilir.
 
+## Canlı dinleme
+
+`src/live/MicInput.ts` mikrofonu açar ve çıkışa bağlamaz, bu yüzden yankı oluşmaz. Yankı giderme, gürültü bastırma ve otomatik kazanç kapalıdır; böylece cihazın kendi çaldığı müzik silinmez. Her karede `AnalyserNode` (2048) spektrumu `LiveBeatTracker`'a verilir.
+
+| Aşama | Yöntem |
+|---|---|
+| Akış | 24 log bant, SuperFlux benzeri pozitif fark; kare süresine göre normalize; pencere gecikmesi kadar geriye zaman damgası |
+| Zarf | Düzensiz rAF kareleri 100 Hz'lik düzenli halka arabelleğe (8 sn) yazılır |
+| Tempo | Her 0,25 sn: otokorelasyon + metrik tarak + log-normal önsel + ölçü tutarlılığı (senkop düzeltmesi) + önceki tempoya süreklilik; 5 tahminin medyanı |
+| Evre | Son 4 sn'de ızgaraya düşen zarfı en büyükleyen kayma |
+| Izgara | Küçük farklar yumuşakça izlenir; büyük tempo/evre farkı ancak üst üste 3–4 tahminde doğrulanınca kabul edilir (sıçrama yok) |
+| Güven | Periyodiklik × evre karşıtlığı × kararlılık, ya da ölçü kanıtı; ilk ~7 sn temkinli |
+| Ölçü başı | Vuruşların 4'lü konumlarında bas atağı birikimi |
+| Bölüm | 4 sn ve 16 sn tını ortalamalarının uzaklaşması (en az 16 sn arayla) |
+| Seviye | Bant başına kayan tepe referansıyla otomatik kazanç; sessizlik algısı (kulaklık) |
+
+`FeatureSampler.updateLive`, tahmin edilen ızgarayı giriş gecikmesi (`baseLatency` + izleme gecikmesi) ve kullanıcının kayma ayarı kadar öne alarak `SceneFrame` üretir. Ses yoksa ortam akışına döner. Yerel dosya çalarken dosyanın önceden yapılmış analizi önceliklidir.
+
+**Ölçüm** (`test/live.ts`, 60 Hz titreşimli kareler, ısınma sonrası):
+
+| Parça | Vuruş F (±70 ms) | Ortanca hata |
+|---|---|---|
+| Gece Gölü | 0,87 | +2 ms |
+| Kuzey Rüzgârı | 0,88 | −3 ms |
+| Toz Bulutu (hızlanan) | 0,95 | +6 ms |
+| Kuzey Rüzgârı, düşük seviye + gürültü | 0,81 | −1 ms |
+| Rastgele ataklar | ortalama güven 0,13 | |
+
+Hatalar çoğunlukla bölüm geçişlerinde, izleyicinin yeni desene uyum sağladığı birkaç vuruşta oluşur.
+
 ## Yüklenebilir uygulama (PWA)
 
 - **Manifest:** `public/manifest.webmanifest`. Bağımsız pencere (`standalone`, olanaklıysa `fullscreen`), maskelenebilir simge, ekran görüntüleri ve “Kütüphane / Demo parçalar” kısayolları.

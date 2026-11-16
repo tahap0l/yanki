@@ -1,5 +1,20 @@
 # Değişiklik günlüğü
 
+## 1.2.0 — 2026-11-17
+
+### Eklenenler
+- **Dinle:** Cihazda o an çalan şarkıyı mikrofonla duyup gerçek zamanlı tepki verir; uygulama ve hoparlör fark etmez.
+  - Canlı tempo, vuruş evresi ve ölçü başı;
+  - giriş gecikmesi telafisi;
+  - bölüm değişiminde palet dönüşümü;
+  - güven düşükken yumuşak enerji modu.
+- **Spotify'da çalan şarkı:** Hangi cihazda çalarsa çalsın adı ve kapağı kendiliğinden görünür, tema şarkıya göre değişir.
+- **`L` kısayolu:** Dinle'yi açıp kapatır.
+- **Testler:** `test/live.ts` (canlı izleyici doğruluğu) ve `test/listen.py` (sahte mikrofonla uçtan uca).
+
+### Kaldırılanlar
+- Bağlantı yapıştırma kutusu ve bağlantı ayrıştırıcı. Şarkılar Kütüphane'den ya da herhangi bir uygulamadan çalınır.
+
 ## 1.1.0 — 2026-11-17
 
 ### Eklenenler

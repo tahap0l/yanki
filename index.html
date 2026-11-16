@@ -53,22 +53,14 @@
       <p class="embed-note">Sahne bu videodan bağımsız akar; YouTube sesi analiz edilmez.</p>
     </aside>
 
-    <aside id="spotifyCard" class="spotify-card ui" hidden aria-label="Spotify bağlantısı">
-      <p class="now-kicker">Spotify · <span id="spType"></span></p>
-      <p class="spotify-text">Şarkıyı Spotify’da dinleyin. Sahne, Spotify sesine veya oynatma bilgisine bağlanmadan kendi zamanında akar.</p>
-      <div class="row">
-        <a id="spOpen" class="primary-btn" href="#" target="_blank" rel="noopener">Spotify’da aç</a>
-        <button type="button" class="ghost-btn" id="spClose">Kapat</button>
-      </div>
-    </aside>
-
     <footer class="dock ui" id="dock">
       <div class="dock-row source-row" id="sourceRow">
-        <form id="linkForm" class="link-form" autocomplete="off">
-          <label class="sr-only" for="linkInput">Spotify veya YouTube bağlantısı</label>
-          <input id="linkInput" class="link-input" type="url" inputmode="url" placeholder="Spotify veya YouTube bağlantısı yapıştırın" enterkeyhint="go">
-          <button class="primary-btn" type="submit">Aç</button>
-        </form>
+        <button type="button" class="listen-btn" id="micBtn" aria-pressed="false" title="Cihazda çalan müziği dinle (L)">
+          <span class="listen-ic" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="20" height="20"><rect x="9" y="3" width="6" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </span>
+          <span class="listen-txt"><span class="lbl">Dinle</span><span class="sub">Çalan şarkıya tepki ver</span></span>
+        </button>
         <div class="source-actions">
           <label class="ghost-btn file-btn">
             <input id="fileInput" type="file" accept="audio/*,.mp3,.m4a,.aac,.wav,.flac,.ogg,.oga,.opus,.webm" class="sr-only">
@@ -180,7 +172,7 @@
         <p class="hint" id="cacheInfo">Analizler yalnızca bu cihazda saklanır.</p>
         <button type="button" class="ghost-btn small" id="cacheClear">Analiz önbelleğini temizle</button>
       </div>
-      <p class="hint keys">Kısayollar: Boşluk oynat/duraklat · ←/→ 5 sn · 1/2/3 sahne · F tam ekran · [ ] vuruş kayması · T ritme dokun</p>
+      <p class="hint keys">Kısayollar: L dinle · Boşluk oynat/duraklat · ←/→ 5 sn · 1/2/3 sahne · F tam ekran · [ ] vuruş kayması · T ritme dokun</p>
     </div>
 
     <div id="installPanel" class="sheet install-sheet" role="dialog" aria-modal="false" aria-labelledby="installTitle" hidden>

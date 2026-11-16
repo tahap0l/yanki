@@ -127,24 +127,7 @@ async def main():
         d, secs = await wait_ready(page)
         R['dosya_önbellek'] = {'durum': d['analysis'], 's': round(secs, 2)}
 
-        # 10) bağlantılar
-        await page.fill('#linkInput', 'https://open.spotify.com/intl-tr/track/4cOdK2wGLETKBW3PvgPWqT?si=abc')
-        await page.click('#linkForm button[type=submit]')
-        await page.wait_for_timeout(500)
-        R['spotify'] = {'kart': await page.is_visible('#spotifyCard'), 'href': await page.get_attribute('#spOpen', 'href'), 'durum': await page.inner_text('#status'), 'sekme_sayısı': len(ctx.pages)}
-        for pg in ctx.pages[1:]: await pg.close()
-        await page.fill('#linkInput', 'https://youtu.be/dQw4w9WgXcQ?t=42')
-        await page.click('#linkForm button[type=submit]')
-        await page.wait_for_timeout(6000)
-        R['youtube'] = {'panel': await page.is_visible('#ytPanel'), 'href': await page.get_attribute('#ytOpen', 'href'), 'içerik': (await page.inner_text('#ytHost'))[:120], 'durum': await page.inner_text('#status')}
-        await page.screenshot(path='test/shots/15-youtube.png')
-        await page.fill('#linkInput', 'https://example.com/x')
-        await page.click('#linkForm button[type=submit]')
-        await page.wait_for_timeout(300)
-        R['geçersiz'] = await page.inner_text('#toast')
-
         # 11) tam ekran: hareketsizlikte gizlen, odakta görünür
-        await page.click('#ytClose')
         await page.click('#libBtn'); await page.click('#tab-device'); await page.click('.demo-item >> nth=1')
         await page.wait_for_timeout(500)
         await page.click('#fsBtn')

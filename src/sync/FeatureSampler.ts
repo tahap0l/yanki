@@ -3,6 +3,7 @@ import type { AnalysisResult, RhythmStage } from '../analysis/types';
 import type { LiveLevels } from '../audio/AudioEngine';
 import type { SceneFrame, SyncMode } from '../scenes/types';
 import { emptyFrame } from '../scenes/types';
+import type { LiveEvents, LiveState } from '../live/LiveBeatTracker';
 
 const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
 const smoothstep = (a: number, b: number, x: number) => { const t = clamp01((x - a) / (b - a)); return t * t * (3 - 2 * t); };
@@ -87,6 +88,9 @@ export class FeatureSampler {
   private ambientBar = 0;
   /** akış kaynaklarında parçaya göre tema (ses analizi değil, parça kimliğinden) */
   private theme: { palette: number; pace: number } | null = null;
+  private liveLastBeat = -1;
+  private liveBeatIdx = 0;
+  private liveDownAt = -1;
   readonly frame: SceneFrame = emptyFrame();
 
   setResult(r: AnalysisResult | null): void {
@@ -281,6 +285,87 @@ export class FeatureSampler {
   private paletteMix(now: number): number {
     const dur = this.frame.reducedMotion ? 12 : 7;
     return smoothstep(0, 1, (now - this.palette.start) / dur);
+  }
+
+  /**
+   * Canlı mod: mikrofonla duyulan müziğe gerçek zamanlı tepki.
+   * Vuruşlar izleyicinin tahmin ettiği ızgaradan, giriş gecikmesi kadar öne alınarak çalınır.
+   */
+  updateLive(opts: {
+    wallDt: number;
+    now: number;
+    st: LiveState;
+    ev: LiveEvents;
+    /** giriş gecikmesi + kullanıcı kayması (s): görseller bu kadar erken */
+    lead: number;
+    intensity: number;
+    reducedMotion: boolean;
+  }): SceneFrame {
+    const f = this.frame;
+    const { st, ev } = opts;
+    // ses yoksa (sessiz oda, kulaklık) sakin ortam akışına dön
+    if (!st.active) {
+      return this.update({ wallDt: opts.wallDt, musicTime: null, playing: true, jumped: false, live: null, intensity: opts.intensity, reducedMotion: opts.reducedMotion });
+    }
+    const dt = Math.min(0.1, Math.max(0, opts.wallDt));
+    const motion = opts.reducedMotion ? 0.35 : 1;
+    this.sceneTime += dt * motion;
+    f.time = this.sceneTime; f.dt = dt;
+    f.intensity = opts.intensity; f.reducedMotion = opts.reducedMotion;
+    f.playing = true;
+    f.beats = []; f.onsets = []; f.downbeat = false;
+    const k = (tau: number) => 1 - Math.exp(-dt / tau);
+    const S = this.sm;
+    S.bass += (st.bass - S.bass) * k(0.07);
+    S.mid += (st.mid - S.mid) * k(0.12);
+    S.treble += (st.treble - S.treble) * k(0.06);
+    S.energy += (st.energy - S.energy) * k(0.5);
+    S.melody += (st.melody - S.melody) * k(0.35);
+    S.hush += (0 - S.hush) * k(0.4);
+    f.bass = S.bass; f.mid = S.mid; f.treble = S.treble; f.energy = S.energy; f.melody = S.melody; f.hush = S.hush;
+    const target = smoothstep(0.25, 0.55, st.confidence);
+    S.sync += (target - S.sync) * k(0.8);
+    f.sync = S.sync;
+    f.mode = S.sync > 0.5 ? 'beat' : 'energy';
+    f.bpm = st.bpm;
+    // ızgara: algılanan zaman ile duyulan an arasındaki farkı öne alarak kapat
+    const t = opts.now + opts.lead;
+    const P = st.period;
+    let last = st.lastBeat;
+    if (st.nextBeat > 0 && P > 0) {
+      // tahmini sonraki vuruşlardan, öne alınmış an itibarıyla en son geçeni bul
+      last = st.nextBeat;
+      while (last > t) last -= P;
+      f.beatPhase = clamp01((t - last) / P);
+      const since = t - last;
+      f.beatPulse = pulse(since, 0.05, Math.min(0.35, P * 0.55)) * (0.5 + 0.5 * st.bass) * target;
+      if (this.liveLastBeat < 0 || last > this.liveLastBeat + P * 0.5) {
+        if (this.liveLastBeat >= 0 && target > 0.05) {
+          this.liveBeatIdx++;
+          const down = st.beatInBar >= 0 && ((st.beatInBar + Math.round((last - st.lastBeat) / P)) % 4 + 4) % 4 === 0;
+          f.beats.push({ strength: (0.4 + 0.5 * st.bass) * target, bass: Math.max(st.bass, 0.3) * target });
+          if (down && st.barConfidence > 0.25) { f.downbeat = true; this.liveDownAt = t; }
+        }
+        this.liveLastBeat = last;
+      }
+      f.barPulse = this.liveDownAt > 0 ? pulse(t - this.liveDownAt, 0.12, 0.9) : 0;
+    }
+    // ritim belirsizse: algılanan ataklardan yumuşak tepki
+    if (target < 0.5) {
+      for (const o of ev.onsets) if (st.bass > 0.35) f.beats.push({ strength: 0.4 * o, bass: 0.5 * st.bass * (1 - target) });
+      this.liveBeatEnv = Math.max(this.liveBeatEnv * Math.exp(-dt / 0.3), ev.onsets.length ? 1 : 0);
+      f.beatPulse = f.beatPulse + this.liveBeatEnv * 0.5 * (1 - target);
+    }
+    for (const o of ev.onsets) f.onsets.push(o);
+    f.onsetPulse = Math.max(f.onsetPulse * Math.exp(-dt / 0.18), ev.onsets.length ? ev.onsets[ev.onsets.length - 1] : 0);
+    // palet: parça teması + algılanan bölüm değişimleri
+    const base = this.theme ? this.theme.palette : 0;
+    const pal = (base + st.sectionId) % 6;
+    if (pal !== this.palette.to) this.palette = { from: this.palette.to, to: pal, start: this.sceneTime };
+    f.paletteFrom = this.palette.from; f.paletteTo = this.palette.to; f.paletteMix = this.paletteMix(this.sceneTime);
+    f.sectionEnergy += (S.energy - f.sectionEnergy) * k(4);
+    this.prevT = -1;
+    return f;
   }
 
   /** Ortam modu: şarkıdan bağımsız, kendi zamanında yavaş akış. */

@@ -7,12 +7,12 @@ import { FeatureSampler } from '../sync/FeatureSampler';
 import { SceneHost, type RendererPref } from '../scenes/SceneHost';
 import { SCENES, type SceneId } from '../scenes/types';
 import { loadCatalog, type CatalogEntry } from '../sources/catalog';
-import { parseLink, SPOTIFY_TYPE_LABEL } from '../sources/links';
 import { YouTubeEmbed } from '../sources/YouTubeEmbed';
 import { loadPrefs, savePrefs, type Prefs } from './prefs';
 import { BeatStrip } from './BeatStrip';
 import { Library } from './Library';
 import { Pwa } from './Pwa';
+import { MicInput, type MicStatus } from '../live/MicInput';
 import { SpotifyAuth } from '../services/spotify/SpotifyAuth';
 import { SpotifyApi } from '../services/spotify/SpotifyApi';
 import { SpotifyPlayback } from '../services/spotify/SpotifyPlayback';
@@ -24,7 +24,6 @@ type Source =
   | { kind: 'none' }
   | { kind: 'file'; key: string | null; title: string; file: File }
   | { kind: 'catalog'; key: string; entry: CatalogEntry }
-  | { kind: 'spotify'; url: string; type: string }
   | { kind: 'stream'; provider: Provider; adapter: PlaybackAdapter };
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -54,6 +53,9 @@ export class App {
   private ytApi = new YouTubeApi(this.gAuth);
   private library!: Library;
   private pwa = new Pwa();
+  private mic = new MicInput();
+  private spNowTimer = 0;
+  private spNowKey = '';
   private lastTrackKey = '';
   private streamNote = '';
   private strip: BeatStrip;
@@ -92,11 +94,14 @@ export class App {
     this.bindUi();
     this.bindAudio();
     this.setupPwa();
+    this.mic.onStatus = (st, m) => this.onMicStatus(st, m);
+    if (this.spAuth.connected) this.startSpotifyNowPlaying();
     void this.spAuth.handleRedirect().then((r) => {
-      if (r === 'connected') { this.toast('Spotify bağlandı.'); this.openLibrary('spotify'); }
+      if (r === 'connected') { this.toast('Spotify bağlandı.'); this.openLibrary('spotify'); this.startSpotifyNowPlaying(); }
       else if (r?.startsWith('error:')) { this.toast(r.slice(6)); this.openLibrary('spotify'); }
     });
     this.renderScenes();
+    this.setTransportEnabled(false);
     this.renderSettings();
     this.updateStatus();
     void this.loadCatalog();
@@ -123,7 +128,6 @@ export class App {
     this.sampler.setAlignment({ offsetMs: 0, tempoFactor: 1 });
     this.sampler.reset();
     this.analysisStatus = { state: 'idle' };
-    $('spotifyCard').hidden = true;
     $('nowPlaying').hidden = true;
     this.source = { kind: 'none' };
     this.strip.set(null, 0);
@@ -190,39 +194,6 @@ export class App {
     } catch (e) {
       if (token === this.sourceToken) this.onAnalysisStatus(key, { state: 'error', message: 'Parça analiz için alınamadı.' });
     }
-  }
-
-  async openLink(text: string): Promise<void> {
-    const p = parseLink(text);
-    if (p.kind === 'unknown') { this.toast(p.reason); return; }
-    if (p.kind === 'spotify') {
-      // bağlıysa uygulamada çal; değilse Spotify'da aç
-      if (this.spAuth.connected && ['track', 'album', 'playlist'].includes(p.type)) {
-        const uri = `spotify:${p.type}:${p.id}`;
-        const opts = p.type === 'track'
-          ? { tracks: [{ provider: 'spotify', id: p.id, uri, title: '', artists: '', url: p.url } as Track], index: 0 }
-          : { collection: { provider: 'spotify', kind: p.type === 'album' ? 'album' : 'playlist', id: p.id, title: '', subtitle: '', contextUri: uri, url: p.url, readable: false } as Collection };
-        await this.playStream('spotify', opts).catch((e) => this.toast(e instanceof Error ? e.message : String(e)));
-        return;
-      }
-      window.open(p.url, '_blank', 'noopener');
-      await this.clearSource();
-      this.source = { kind: 'spotify', url: p.url, type: p.type };
-      $('spType').textContent = SPOTIFY_TYPE_LABEL[p.type] || 'Bağlantı';
-      ($('spOpen') as HTMLAnchorElement).href = p.url;
-      $('spotifyCard').hidden = false;
-      this.showNow('Spotify', 'Spotify’da dinleniyor', 'Ortam animasyonu · şarkıdan bağımsız akar');
-      this.updateStatus();
-      return;
-    }
-    await this.clearSource();
-    const yt = this.ensureYouTube();
-    ($('ytOpen') as HTMLAnchorElement).href = p.watchUrl;
-    this.source = { kind: 'stream', provider: 'youtube', adapter: yt };
-    this.setTransportEnabled(true);
-    this.setCollapsed(true);
-    void yt.open(p.videoId, p.start);
-    this.updateStatus();
   }
 
   // ---------------- akış kaynakları (Spotify / YouTube) ----------------
@@ -296,6 +267,7 @@ export class App {
     this.setTransportEnabled(true);
     this.setCollapsed(true);
     if (window.innerWidth < 860) this.closePanels(false);
+    if (!this.mic.on && this.mic.status !== 'denied') this.toast('Görsellerin şarkıya tepki vermesi için “Dinle”ye dokunun.');
     this.updateStatus();
   }
 
@@ -377,31 +349,37 @@ export class App {
     const jumped = this.clock.consumeJump();
     const live = local ? this.engine.sample() : null;
     const musicTime = local ? this.clock.now() : null;
-    const frame = this.sampler.update({
-      wallDt: dtMs / 1000,
-      musicTime,
-      playing: local ? this.clock.playing : true,
-      jumped,
-      live,
-      intensity: this.prefs.intensity,
-      reducedMotion: this.prefs.reducedMotion,
-    });
+    // yerel dosya çalarken onun analizi; değilse mikrofon açıksa canlı dinleme
+    const listening = this.mic.on && !(local && this.clock.playing);
+    const tSec = now / 1000;
+    const micEv = this.mic.on ? this.mic.sample(tSec) : null;
+    const frame = listening && micEv
+      ? this.sampler.updateLive({
+        wallDt: dtMs / 1000, now: tSec, st: this.mic.tracker.state, ev: micEv,
+        lead: this.mic.inputLatency() + this.sampler.getAlignment().offsetMs / 1000,
+        intensity: this.prefs.intensity, reducedMotion: this.prefs.reducedMotion,
+      })
+      : this.sampler.update({
+        wallDt: dtMs / 1000,
+        musicTime,
+        playing: local ? this.clock.playing : true,
+        jumped,
+        live,
+        intensity: this.prefs.intensity,
+        reducedMotion: this.prefs.reducedMotion,
+      });
     this.host.render(frame, dtMs);
     if (now - this.lastUi > 120) {
       this.lastUi = now;
       this.updateTransport();
-      if (local && this.result?.rhythm) this.updateStatus(true);
+      if ((local && this.result?.rhythm) || listening) this.updateStatus(true);
     }
     requestAnimationFrame((t) => this.loop(t));
   }
 
   // ---------------- arayüz ----------------
   private bindUi(): void {
-    $('linkForm').addEventListener('submit', (e) => {
-      e.preventDefault();
-      const inp = $('linkInput') as HTMLInputElement;
-      void this.openLink(inp.value);
-    });
+    $('micBtn').addEventListener('click', () => void this.toggleMic());
     const fileInput = $('fileInput') as HTMLInputElement;
     fileInput.addEventListener('click', () => this.engine.ensureContext());
     fileInput.addEventListener('change', () => {
@@ -436,7 +414,6 @@ export class App {
     }
     $('fsBtn').addEventListener('click', () => this.toggleFullscreen());
     $('ytClose').addEventListener('click', () => { void this.clearSource().then(() => this.updateStatus()); });
-    $('spClose').addEventListener('click', () => { void this.clearSource().then(() => this.updateStatus()); });
 
     // ayarlar
     const inten = $('intensity') as HTMLInputElement;
@@ -476,13 +453,6 @@ export class App {
       const f = e.dataTransfer?.files?.[0];
       if (f) void this.openFile(f);
     });
-    // yapıştırma: bağlantı kutusu dışında da
-    window.addEventListener('paste', (e) => {
-      const target = e.target as HTMLElement;
-      if (target?.closest('input, textarea')) return;
-      const text = e.clipboardData?.getData('text') || '';
-      if (/spotify|youtu/i.test(text)) { ($('linkInput') as HTMLInputElement).value = text; void this.openLink(text); }
-    });
     window.addEventListener('resize', () => this.strip.redraw());
     // panel yüksekliği: başlık ve sayfalar buna göre yerleşir
     const dock = $('dock');
@@ -517,6 +487,7 @@ export class App {
 
   private setTransportEnabled(on: boolean): void {
     const stream = this.source.kind === 'stream';
+    $('dock').classList.toggle('no-source', this.source.kind === 'none');
     $('prevBtn').hidden = !stream;
     $('nextBtn').hidden = !stream;
     ($('playBtn') as HTMLButtonElement).disabled = !on;
@@ -574,14 +545,22 @@ export class App {
     const st = $('status');
     const s = this.source;
     let dot = 'ambient', txt = '';
-    if (s.kind === 'none') { txt = 'Ortam modu · bir kaynak seçin'; }
-    else if (s.kind === 'spotify') { txt = 'Ortam animasyonu · Spotify sesi analiz edilmez'; }
+    const localPlaying = (s.kind === 'file' || s.kind === 'catalog') && !this.engine.el.paused;
+    if (this.mic.on && !localPlaying) {
+      const st = this.mic.tracker.state;
+      const sync = this.sampler.frame.sync;
+      if (!st.active) { dot = 'ambient'; txt = 'Dinliyor · müzik bekleniyor'; }
+      else if (sync > 0.5) { dot = 'beat'; txt = `Dinliyor · ${Math.round(st.bpm)} BPM · güven %${Math.round(st.confidence * 100)}`; }
+      else { dot = 'energy'; txt = 'Dinliyor · ritim aranıyor'; }
+      if (s.kind === 'stream' && this.streamNote) { dot = 'busy'; txt = this.streamNote; }
+    }
+    else if (s.kind === 'none') { txt = 'Müziği açın ve “Dinle”ye dokunun'; }
     else if (s.kind === 'stream') {
       if (this.streamNote) { dot = 'busy'; txt = this.streamNote; }
       else if (s.provider === 'spotify') {
         const sp = this.spPlay;
-        txt = sp?.mode === 'connect' ? `Spotify · “${sp.connectDeviceName || 'Spotify uygulaması'}” cihazında · parçaya göre tema` : 'Spotify · bu tarayıcıda · parçaya göre tema';
-      } else txt = this.yt?.unavailable ? 'YouTube · oynatıcı açılamadı' : 'YouTube · resmi oynatıcı · parçaya göre tema';
+        txt = sp?.mode === 'connect' ? `Spotify · “${sp.connectDeviceName || 'Spotify uygulaması'}” cihazında · tepki için Dinle` : 'Spotify · bu tarayıcıda · tepki için Dinle';
+      } else txt = this.yt?.unavailable ? 'YouTube · oynatıcı açılamadı' : 'YouTube · tepki için Dinle';
     }
     else {
       const a = this.analysisStatus;
@@ -707,14 +686,15 @@ export class App {
 
   private renderAlign(): void {
     const local = this.source.kind === 'file' || this.source.kind === 'catalog';
-    const ok = local && !!this.result?.rhythm;
+    const ok = (local && !!this.result?.rhythm) || this.mic.on;
     $('alignBox').classList.toggle('disabled', !ok);
     const a = this.sampler.getAlignment();
     ($('offset') as HTMLInputElement).value = String(a.offsetMs);
     $('offsetOut').textContent = `${a.offsetMs > 0 ? '+' : ''}${a.offsetMs} ms`;
     for (const b of $('tempoSeg').querySelectorAll<HTMLButtonElement>('button')) b.setAttribute('aria-checked', String(Number(b.dataset.v) === a.tempoFactor));
     const r = this.result?.rhythm;
-    $('alignHint').textContent = !local ? 'Bir ses dosyası veya demo çalarken kullanılabilir.'
+    $('alignHint').textContent = this.mic.on && !local ? 'Dinlerken: görseller vuruştan önce ya da sonra geliyorsa kaymayı ayarlayın.'
+      : !local ? 'Bir ses dosyası veya demo çalarken ya da dinlerken kullanılabilir.'
       : !r ? 'Ritim analizi tamamlanınca kullanılabilir.'
       : `Tahmin: ${Math.round(r.bpm)} BPM · ritim güveni %${Math.round(r.confidence * 100)}${r.octaveAmbiguity > 0.85 ? ' · yarım/çift tempo belirsiz olabilir' : ''}${r.downbeats.length ? ` · ${r.meter}/4 ölçü` : ' · ölçü başı güvenilir değil'}`;
   }
@@ -764,6 +744,52 @@ export class App {
       if (id === 'libraryPanel') this.library.open();
       (p.querySelector('[data-close]') as HTMLElement | null)?.focus();
     }
+  }
+
+  // ---------------- dinleme (mikrofon) ----------------
+  private async toggleMic(): Promise<void> {
+    if (this.mic.on || this.mic.status === 'starting') { this.mic.stop(); return; }
+    const ctx = this.engine.ensureContext();
+    await this.mic.start(ctx);
+  }
+
+  private onMicStatus(st: MicStatus, message?: string): void {
+    const b = $('micBtn');
+    b.setAttribute('aria-pressed', String(st === 'on'));
+    b.classList.toggle('on', st === 'on');
+    b.querySelector('.lbl')!.textContent = st === 'on' ? 'Dinleniyor' : st === 'starting' ? 'Açılıyor…' : 'Dinle';
+    if (message) this.toast(message);
+    if (st === 'on') { try { localStorage.setItem('yanki.mic', '1'); } catch { /* yoksay */ } this.setCollapsed(true); }
+    if (st === 'off' || st === 'denied') { try { localStorage.removeItem('yanki.mic'); } catch { /* yoksay */ } this.sampler.reset(); }
+    this.renderAlign();
+    this.updateStatus();
+  }
+
+  /** Spotify bağlıysa: hangi cihazda çalarsa çalsın o anki şarkıyı göster, temayı ona göre ayarla. */
+  private startSpotifyNowPlaying(): void {
+    clearInterval(this.spNowTimer);
+    const tick = async () => {
+      if (document.hidden || !this.spAuth.connected) return;
+      if (this.source.kind === 'file' || this.source.kind === 'catalog' || (this.source.kind === 'stream')) return;
+      try {
+        const s = await this.spApi.playbackState();
+        const it = s?.item;
+        if (!it || !s.is_playing) return;
+        const key = `spotify:${it.uri}`;
+        if (key === this.spNowKey) return;
+        this.spNowKey = key;
+        this.sampler.setTheme(key);
+        const img = it.album?.images?.[0]?.url as string | undefined;
+        const artists = (it.artists || []).map((a: { name: string }) => a.name).join(', ');
+        this.showNow(`Spotify · ${s.device?.name || 'çalıyor'}`, it.name, [artists, it.album?.name].filter(Boolean).join(' · '));
+        const art = $('nowArt') as HTMLImageElement;
+        if (img) { art.src = img; art.hidden = false; } else art.hidden = true;
+        const link = $('nowLink') as HTMLAnchorElement;
+        link.href = it.external_urls?.spotify || 'https://open.spotify.com'; link.textContent = 'Spotify’da aç'; link.hidden = false;
+      } catch { /* geçici ağ hatası */ }
+    };
+    void tick();
+    this.spNowTimer = window.setInterval(() => void tick(), 5000);
   }
 
   // ---------------- yüklenebilir uygulama ----------------
@@ -863,6 +889,7 @@ export class App {
       case '[': this.nudge(-10); break;
       case ']': this.nudge(10); break;
       case 't': case 'T': this.tap(); break;
+      case 'l': case 'L': void this.toggleMic(); break;
     }
   }
 

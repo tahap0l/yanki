@@ -29,15 +29,12 @@ Son çalıştırmadaki sonuçlar:
 | Rastgele ataklar | güven 0,09, ölçü başı yok |
 | 30 dk dosya | ~4,3 sn analiz, ~13 MB ek bellek |
 
-## Bağlantılar ve haklar — `npx tsx test/links.ts`
+## Canlı dinleme — `npx tsx test/live.ts` ve `npm run test:listen`
 
-Test edilen bağlantı biçimleri:
-
-- **Spotify:** `open.spotify.com/{track,album,playlist,episode}`, `intl-xx` önekli adresler, `spotify:` URI'leri.
-- **YouTube:** `watch?v=`, `youtu.be` (`t=1m5s` dahil), `music.youtube.com`, `shorts`, `embed?start=`, `live`.
-- **Geçersiz girişler:** reddedilmesi gereken bağlantılar.
-
-Ayrıca katalog hak doğrulaması sınanır: eksik hakkı olan parça çalınamaz.
+- **`test/live.ts`:** `AnalyserNode`'u taklit eder (Blackman penceresi, 2048 nokta, dB) ve demo parçaları 60 Hz civarı titreşimli, ara sıra kare atlayan karelerle canlı izleyiciye verir. Sonuçlar ve eşikler: [MIMARI.md](MIMARI.md#canlı-dinleme).
+- **`test/listen.py`:** Chrome'un sahte mikrofonuna bir demo parça verir ve Dinle düğmesiyle uçtan uca dener:
+  - Kuzey Rüzgârı “121 BPM · güven %95” olarak tanındı; sahneye giden vuruş aralıkları 491–498 ms (gerçek 492 ms).
+  - İlk saniyelerdeki belirsiz tahminlerde sahne yumuşak enerji modunda kalır.
 
 ## Tarayıcı — `npm run test:browser`
 
@@ -54,7 +51,6 @@ Ayrıca katalog hak doğrulaması sınanır: eksik hakkı olan parça çalınama
 | Davulsuz giriş | Yumuşak enerji moduna geçer, ritimde vuruş moduna döner | Giriş: enerji, sonra vuruş (senkron 0,96) |
 | Elle hiza +40 ms | Faz hatasına yansır | −38 ms |
 | Yerel dosya + önbellek | İkinci açılışta önbellekten | `fromCache: true` |
-| Bağlantılar | Spotify kartı, YouTube paneli, geçersiz bağlantı uyarısı | Geçti |
 | Tam ekran | Hareketsizlikte gizlenir, klavye odağında görünür kalır | Geçti |
 
 `test/shots.py`, masaüstü, telefon (390×844), iPad (820×1180) ve yatay telefon görünümlerinde ekran görüntüsü alır; yatay taşma ve 32 px altındaki dokunma hedeflerini denetler.
@@ -76,7 +72,6 @@ Ayrıca katalog hak doğrulaması sınanır: eksik hakkı olan parça çalınama
 | Hatalar | İzin listesinde olmayan hesap ve kullanıcının izni reddetmesi için anlaşılır mesaj |
 | YouTube | Giriş, listeler (gizli videolar ayıklanır), beğenilenler, HTML varlıkları çözülmüş arama, liste çalma, sonraki video, oynatıcıyı örtmeyen paneller |
 | Kaynak geçişi | YouTube → demo: oynatıcı kapanır, taşıma çubuğu yerel moda döner |
-| Bağlantıdan çalma | Bağlı Spotify'da liste bağlantısı uygulamada çalar, yeni sekme açılmaz |
 
 ## Sınırlar
 

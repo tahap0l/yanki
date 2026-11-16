@@ -4,7 +4,7 @@
 
 **Müziği sinematik, etkileşimli bir görsel dünyaya dönüştüren uygulama.**
 
-Telefona, iPad'e ve bilgisayara yüklenir; kendi simgesiyle tam ekran açılır, demolarla çevrimdışı da çalışır. Kendi ses dosyalarınızı vuruşu vuruşuna analiz eder; Spotify ve YouTube kütüphanenizi tek bir ekranda açar.
+Cihazınızda o an çalan şarkıyı **dinler** ve ritmine, basına, enerjisine göre anında hareket eder: Spotify, YouTube, radyo, hoparlör fark etmez. Telefona, iPad'e ve bilgisayara yüklenir; kendi simgesiyle tam ekran açılır. Kendi ses dosyalarınızı vuruşu vuruşuna analiz eder; Spotify ve YouTube kütüphanenizi tek bir ekranda açar.
 
 [**Canlı demo →**](https://tahap0l.github.io/yanki/) · [English](README.en.md) · [Kurulum](docs/KURULUM.md) · [Mimari](docs/MIMARI.md) · [Ses analizi](docs/SES-ANALIZI.md)
 
@@ -20,6 +20,7 @@ Telefona, iPad'e ve bilgisayara yüklenir; kendi simgesiyle tam ekran açılır,
 
 ## İçindekiler
 
+- [Dinle: çalan şarkıya tepki](#dinle-çalan-şarkıya-tepki)
 - [Uygulamayı yükle](#uygulamayı-yükle)
 - [Neler yapar?](#neler-yapar)
 - [Sahneler](#sahneler)
@@ -33,6 +34,20 @@ Telefona, iPad'e ve bilgisayara yüklenir; kendi simgesiyle tam ekran açılır,
 - [Bilinen sınırlar](#bilinen-sınırlar)
 - [Yol haritası](#yol-haritası)
 - [Lisans](#lisans)
+
+## Dinle: çalan şarkıya tepki
+
+**Dinle** düğmesine dokunun, müziği istediğiniz uygulamadan çalın. Yankı sesi mikrofonla duyar ve sahne o şarkıya gerçek zamanlı tepki verir:
+
+- **Tempo ve vuruşlar** canlı izlenir; görseller, giriş gecikmesi kadar öne alınarak tam vuruşta atar. Hızlanan ve senkoplu parçalarda da çalışır.
+- **Ölçü başları** akışın yönünü değiştirir; **bölüm değişimleri** (nakarat, köprü) renk paletini dönüştürür.
+- **Belirsizlikte yumuşak mod:** Ritim belirsizse (davulsuz giriş, serbest tempo) ya da tahmin henüz oturmadıysa sahne yumuşak enerji tepkisinde kalır. Güven gelince vuruş senkronuna geçer.
+- **Spotify bağlıysa** o an çalan şarkının adı ve kapağı, hangi cihazda çalarsa çalsın kendiliğinden görünür; renk teması şarkıya göre değişir.
+- **Gizlilik:** Ses hiçbir yere gönderilmez ve kaydedilmez; yalnız anlık frekans dağılımı hesaplanır.
+
+> Kulaklıkla dinlerken mikrofon müziği duyamaz; sahne o zaman sakin ortam akışına geçer. En iyi sonuç için müziği hoparlörden çalın.
+
+Kendi ses dosyanızı **Dosya aç** ile açarsanız parça önceden analiz edilir ve tam ritim senkronuyla çalar.
 
 ## Uygulamayı yükle
 
@@ -103,7 +118,8 @@ npm run dev          # http://127.0.0.1:5173
 | `npm run dev` | Geliştirme sunucusu (127.0.0.1 — Spotify `localhost` kabul etmez) |
 | `npm run build` | Tür denetimi + üretim derlemesi → `dist/` |
 | `npm run preview` | Derlemeyi yerelde sunar |
-| `npm test` | Ses analizi doğruluk testi + bağlantı ayrıştırıcı testleri |
+| `npm test` | Dosya analizi + canlı dinleme izleyicisi doğruluk testleri |
+| `npm run test:listen` | Gerçek Chrome'da sahte mikrofonla Dinle modu |
 | `npm run test:browser` | Gerçek Chrome'da senkron, sarma, önbellek, tam ekran testleri |
 | `npm run test:services` | Spotify / Google / YouTube akışları, sahte servislerle |
 | `npm run demos` | Demo parçaları yeniden sentezler (ffmpeg gerekir) |
@@ -162,6 +178,7 @@ Demo parçalar bu proje için sentezlendiğinden gerçek vuruş zamanları bilin
 
 | Tuş | İşlev |
 |---|---|
+| `L` | Dinle aç / kapat |
 | `Boşluk` / `K` | Oynat / duraklat |
 | `←` `→` | 5 saniye geri / ileri |
 | `1` `2` `3` | Ay Işığı / Kutup Işıkları / Yıldız Tozu |
@@ -182,7 +199,8 @@ src/
 ├─ sync/         FeatureSampler — analiz + konum → SceneFrame
 ├─ scenes/       SceneHost, kalite uyarlama, webgl/ ve canvas2d/ sahneleri
 ├─ services/     Spotify (PKCE, Web API, SDK) ve YouTube (GIS, Data API)
-├─ sources/      bağlantı ayrıştırıcı, lisanslı katalog, YouTube oynatıcısı
+├─ live/         MicInput (mikrofon) ve LiveBeatTracker (gerçek zamanlı tempo, vuruş, ölçü, bölüm)
+├─ sources/      lisanslı katalog, YouTube oynatıcısı
 └─ app/          App (arayüz), Library (kütüphane paneli), BeatStrip, tercihler
 test/            analiz doğruluğu, tarayıcı ve servis testleri, sahte SDK'lar
 scripts/         demo sentezleyici, simge kaynakları, service worker şablonu ve derleme eklentisi
@@ -194,7 +212,8 @@ docs/            ayrıntılı belgeler ve ekran görüntüleri
 | Test | Kapsam |
 |---|---|
 | `test/eval.ts` | FFT doğruluğu; 3 demo + hızlandırma + gürültü + ritimsiz sinyal + 30 dk dosya |
-| `test/links.ts` | Spotify/YouTube bağlantı biçimleri, katalog hak doğrulaması |
+| `test/live.ts` | Canlı izleyici: düzensiz (rAF) karelerle 3 demo, düşük seviye + gürültü, ritimsiz sinyal |
+| `test/listen.py` | Gerçek Chrome, sahte mikrofon: Dinle düğmesi, algılanan tempo, sahneye giden vuruş aralıkları |
 | `test/browser_full.py` | Gerçek Chrome: senkron fazı, sarma, duraklatma, sekme dönüşü, iptal, elle hiza, önbellek, tam ekran |
 | `test/services.py` | OAuth PKCE, belirteç yenileme, Spotify API (Şubat 2026 biçimi), SDK ve Connect, YouTube; hata durumları |
 | `test/pwa.py` | Service worker, çevrimdışı açılış, önbellekten demo çalma ve sarma, iOS yükleme yardımı, yüklüyken gizlenen düğme |

@@ -230,11 +230,6 @@ async def main():
         await page.wait_for_timeout(800)
         R['demoya_geçiş'] = {'yt_panel': await page.is_visible('#ytPanel'), 'kaynak': (await page.evaluate('window.yanki.debug()'))['source'], 'önceki_butonu': await page.is_visible('#prevBtn')}
 
-        # --- Spotify bağlantısından uygulamada çalma
-        await page.fill('#linkInput', 'https://open.spotify.com/intl-tr/playlist/37i9dQZF1DXcBWIGoYBM5M?si=x')
-        n_before = len(LOG['play'])
-        await page.click('#linkForm button[type=submit]'); await page.wait_for_timeout(2500)
-        R['spotify_bağlantısı_uygulamada'] = {'yeni_istek': len(LOG['play']) > n_before, 'istek': LOG['play'][-1]['body'], 'yeni_sekme': len(ctx.pages), 'bildirim': await txt(page, '#toast'), 'durum': await txt(page, '#status')}
         R['hatalar'] = errs[:10]
         await ctx.close()
 
