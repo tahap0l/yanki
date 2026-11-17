@@ -37,15 +37,24 @@ Cihazınızda o an çalan şarkıyı **dinler** ve ritmine, basına, enerjisine 
 
 ## Dinle: çalan şarkıya tepki
 
-**Dinle** düğmesine dokunun, müziği istediğiniz uygulamadan çalın. Yankı sesi mikrofonla duyar ve sahne o şarkıya gerçek zamanlı tepki verir:
+**Dinle** düğmesine dokunun, müziği istediğiniz uygulamadan çalın; sahne o şarkıya gerçek zamanlı tepki verir. İki kaynak var:
+
+| Kaynak | Nerede | Kulaklıkla |
+|---|---|---|
+| **Bilgisayarın sesi** | Chrome / Edge: Windows, ChromeOS, macOS (Chrome 141+). Açılan pencerede **Tüm ekran**'ı seçip **Sistem sesini de paylaş**'ı işaretleyin; görüntü kullanılmaz. | **Çalışır** — sesin kendisi alınır |
+| **Mikrofon** | Her cihaz (telefon, iPad dahil) | Çalışmaz — mikrofon duyamaz |
+
+Telefon ve iPad tarayıcıları sistem sesini hiçbir web uygulamasına vermez; orada Yankı mikrofonla dinler. Kulaklıkla telefonda dinlerken Spotify bağlıysa şarkının adı, kapağı ve renk teması yine gelir, hareket sakin modda akar.
+
+Her iki kaynakta:
 
 - **Tempo ve vuruşlar** canlı izlenir; görseller, giriş gecikmesi kadar öne alınarak tam vuruşta atar. Hızlanan ve senkoplu parçalarda da çalışır.
 - **Ölçü başları** akışın yönünü değiştirir; **bölüm değişimleri** (nakarat, köprü) renk paletini dönüştürür.
 - **Belirsizlikte yumuşak mod:** Ritim belirsizse (davulsuz giriş, serbest tempo) ya da tahmin henüz oturmadıysa sahne yumuşak enerji tepkisinde kalır. Güven gelince vuruş senkronuna geçer.
 - **Spotify bağlıysa** o an çalan şarkının adı ve kapağı, hangi cihazda çalarsa çalsın kendiliğinden görünür; renk teması şarkıya göre değişir.
 - **Gizlilik:** Ses hiçbir yere gönderilmez ve kaydedilmez; yalnız anlık frekans dağılımı hesaplanır.
+- **Kare hızından bağımsız:** Analiz ses iş parçacığında (AudioWorklet) sabit aralıkla yapılır; yavaş bir bilgisayarda da ataklar kaçmaz.
 
-> Kulaklıkla dinlerken mikrofon müziği duyamaz; sahne o zaman sakin ortam akışına geçer. En iyi sonuç için müziği hoparlörden çalın.
 
 Kendi ses dosyanızı **Dosya aç** ile açarsanız parça önceden analiz edilir ve tam ritim senkronuyla çalar.
 
@@ -178,7 +187,7 @@ Demo parçalar bu proje için sentezlendiğinden gerçek vuruş zamanları bilin
 
 | Tuş | İşlev |
 |---|---|
-| `L` | Dinle aç / kapat |
+| `L` | Dinle (bilgisayarda kaynak seçimi) / durdur |
 | `Boşluk` / `K` | Oynat / duraklat |
 | `←` `→` | 5 saniye geri / ileri |
 | `1` `2` `3` | Ay Işığı / Kutup Işıkları / Yıldız Tozu |
@@ -214,6 +223,7 @@ docs/            ayrıntılı belgeler ve ekran görüntüleri
 | `test/eval.ts` | FFT doğruluğu; 3 demo + hızlandırma + gürültü + ritimsiz sinyal + 30 dk dosya |
 | `test/live.ts` | Canlı izleyici: düzensiz (rAF) karelerle 3 demo, düşük seviye + gürültü, ritimsiz sinyal |
 | `test/listen.py` | Gerçek Chrome, sahte mikrofon: Dinle düğmesi, algılanan tempo, sahneye giden vuruş aralıkları |
+| `test/system_audio.py` | Bilgisayarın sesi: başka bir oynatıcıda çalan şarkı getDisplayMedia ile alınır (xvfb + pulseaudio); telefonda seçeneğin sunulmadığı |
 | `test/browser_full.py` | Gerçek Chrome: senkron fazı, sarma, duraklatma, sekme dönüşü, iptal, elle hiza, önbellek, tam ekran |
 | `test/services.py` | OAuth PKCE, belirteç yenileme, Spotify API (Şubat 2026 biçimi), SDK ve Connect, YouTube; hata durumları |
 | `test/pwa.py` | Service worker, çevrimdışı açılış, önbellekten demo çalma ve sarma, iOS yükleme yardımı, yüklüyken gizlenen düğme |

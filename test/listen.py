@@ -9,12 +9,13 @@ async def main():
     R = {}
     async with async_playwright() as p:
         b = await p.chromium.launch(executable_path='/usr/bin/google-chrome', args=ARGS)
-        ctx = await b.new_context(viewport={'width': 1440, 'height': 900}, permissions=['microphone'])
+        ctx = await b.new_context(viewport={'width': 1440, 'height': 900}, permissions=['microphone'], service_workers='block')
         pg = await ctx.new_page(); errs = []
         pg.on('pageerror', lambda e: errs.append(str(e)))
         await pg.goto('http://localhost:4173/?renderer=webgl2&scene=stardust'); await pg.wait_for_timeout(800)
         R['başlangıç'] = await pg.inner_text('#status')
         await pg.click('#micBtn')
+        if await pg.is_visible('#listenPanel'): await pg.click('#listenMic')
         await pg.wait_for_timeout(1000)
         R['düğme'] = [await pg.get_attribute('#micBtn', 'aria-pressed'), await pg.inner_text('#micBtn .lbl')]
         seen = []

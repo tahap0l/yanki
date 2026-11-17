@@ -55,7 +55,7 @@
 
     <footer class="dock ui" id="dock">
       <div class="dock-row source-row" id="sourceRow">
-        <button type="button" class="listen-btn" id="micBtn" aria-pressed="false" title="Cihazda çalan müziği dinle (L)">
+        <button type="button" class="listen-btn" id="micBtn" aria-pressed="false" aria-controls="listenPanel" title="Çalan müziği dinle (L)">
           <span class="listen-ic" aria-hidden="true">
             <svg viewBox="0 0 24 24" width="20" height="20"><rect x="9" y="3" width="6" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
           </span>
@@ -173,6 +173,24 @@
         <button type="button" class="ghost-btn small" id="cacheClear">Analiz önbelleğini temizle</button>
       </div>
       <p class="hint keys">Kısayollar: L dinle · Boşluk oynat/duraklat · ←/→ 5 sn · 1/2/3 sahne · F tam ekran · [ ] vuruş kayması · T ritme dokun</p>
+    </div>
+
+    <div id="listenPanel" class="sheet listen-sheet" role="dialog" aria-modal="false" aria-labelledby="listenTitle" hidden>
+      <div class="sheet-head">
+        <h2 id="listenTitle">Neyi dinleyelim?</h2>
+        <button type="button" class="icon-btn" data-close aria-label="Kapat"><svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+      </div>
+      <div class="listen-options">
+        <button type="button" class="listen-opt" id="listenSystem">
+          <svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22"><rect x="3" y="4.5" width="18" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8.5 20h7M12 16.5V20" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          <span><strong>Bilgisayarın sesi</strong><span class="sub">Spotify, YouTube ya da herhangi bir uygulamada çalan şarkı. Kulaklıkla da çalışır.</span></span>
+        </button>
+        <button type="button" class="listen-opt" id="listenMic">
+          <svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22"><rect x="9" y="3" width="6" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          <span><strong>Mikrofon</strong><span class="sub">Odada hoparlörden çalan müzik (telefon, radyo, başka bir cihaz).</span></span>
+        </button>
+      </div>
+      <p class="hint">Bilgisayarın sesi için açılan pencerede <strong>Tüm ekran</strong>’ı seçip altta <strong>Sistem sesini de paylaş</strong>’ı işaretleyin. Görüntü kullanılmaz; ses kaydedilmez, hiçbir yere gönderilmez.</p>
     </div>
 
     <div id="installPanel" class="sheet install-sheet" role="dialog" aria-modal="false" aria-labelledby="installTitle" hidden>

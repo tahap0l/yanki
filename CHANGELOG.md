@@ -1,5 +1,12 @@
 # Değişiklik günlüğü
 
+## 1.3.0 — 2026-11-17
+
+### Eklenenler
+- **Bilgisayarın sesi:** Dinle, masaüstü Chrome/Edge'de (Windows, ChromeOS, macOS Chrome 141+) bilgisayarda çalan sesi doğrudan alır; kulaklıkla dinlerken de çalışır. Bilgisayarda Dinle'ye dokununca kaynak seçimi açılır; telefonda doğrudan mikrofon kullanılır.
+- **Ses iş parçacığında analiz:** Canlı analiz AudioWorklet ile sabit ≈16 ms aralıkla yapılır, yavaş cihazda da çizim kare hızından etkilenmez.
+- **Test:** `test/system_audio.py`.
+
 ## 1.2.0 — 2026-11-17
 
 ### Eklenenler

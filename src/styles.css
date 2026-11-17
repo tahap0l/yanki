@@ -205,6 +205,14 @@ output { font-variant-numeric: tabular-nums; color: var(--ink-2); font-size: 13p
 .license { margin-top: 10px; font-size: 12px; color: var(--ink-3); }
 .license a { color: var(--ink-2); }
 
+.listen-options { display: flex; flex-direction: column; gap: 8px; margin: 6px 0 10px; }
+.listen-opt { display: flex; align-items: flex-start; gap: 14px; width: 100%; padding: 14px; border-radius: 14px; border: 1px solid var(--line); background: rgba(255,255,255,.04); color: var(--ink); text-align: left; cursor: pointer; }
+.listen-opt:hover { background: rgba(255,255,255,.09); border-color: var(--line-2); }
+.listen-opt svg { flex: none; margin-top: 2px; color: var(--accent); }
+.listen-opt strong { display: block; font-size: 15px; font-weight: 600; }
+.listen-opt .sub { display: block; margin-top: 3px; font-size: 13px; color: var(--ink-2); line-height: 1.4; }
+.sheet.listen-sheet { left: calc(16px + var(--safe-l)); right: auto; width: min(440px, calc(100% - 24px)); }
+
 /* yüklenebilir uygulama */
 .top-right { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .install-btn {

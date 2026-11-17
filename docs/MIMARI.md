@@ -150,7 +150,19 @@ Mobil tarayıcılarda ses ancak kullanıcı hareketiyle açılabildiği için Sp
 
 ## Canlı dinleme
 
-`src/live/MicInput.ts` mikrofonu açar ve çıkışa bağlamaz, bu yüzden yankı oluşmaz. Yankı giderme, gürültü bastırma ve otomatik kazanç kapalıdır; böylece cihazın kendi çaldığı müzik silinmez. Her karede `AnalyserNode` (2048) spektrumu `LiveBeatTracker`'a verilir.
+`src/live/MicInput.ts` iki kaynaktan ses alır:
+
+| Kaynak | Yöntem |
+|---|---|
+| Mikrofon | `getUserMedia`; yankı giderme, gürültü bastırma ve otomatik kazanç kapalı (cihazın kendi çaldığı müzik silinmesin) |
+| Bilgisayarın sesi | `getDisplayMedia` + `systemAudio: 'include'`; görüntü izi alınır alınmaz durdurulur. Yalnız masaüstü Chromium'da sunulur. |
+
+Ses çıkışa bağlanmaz, bu yüzden yankı oluşmaz.
+
+Analiz `src/live/live-worklet.ts` içinde, **ses iş parçacığında** yapılır: her 768 örnekte (48 kHz'de ≈16 ms) Blackman pencereli 2048 noktalı spektrum, çizim kare hızından bağımsız olarak ana iş parçacığına gönderilir.
+
+- **Saat eşleme:** Ses saati performans saatine, en küçük mesaj gecikmesi gözlemiyle eşlenir.
+- **Yedek yol:** AudioWorklet yoksa her çizim karesinde `AnalyserNode` kullanılır.
 
 | Aşama | Yöntem |
 |---|---|
@@ -166,15 +178,19 @@ Mobil tarayıcılarda ses ancak kullanıcı hareketiyle açılabildiği için Sp
 
 `FeatureSampler.updateLive`, tahmin edilen ızgarayı giriş gecikmesi (`baseLatency` + izleme gecikmesi) ve kullanıcının kayma ayarı kadar öne alarak `SceneFrame` üretir. Ses yoksa ortam akışına döner. Yerel dosya çalarken dosyanın önceden yapılmış analizi önceliklidir.
 
-**Ölçüm** (`test/live.ts`, 60 Hz titreşimli kareler, ısınma sonrası):
+**Ölçüm** (`test/live.ts`, ısınma sonrası; vuruş F ±70 ms):
 
-| Parça | Vuruş F (±70 ms) | Ortanca hata |
+| Parça | Ses iş parçacığı (`MODE=worklet`) | Çizim karesi yedeği (60 Hz, titreşimli) |
 |---|---|---|
-| Gece Gölü | 0,87 | +2 ms |
-| Kuzey Rüzgârı | 0,88 | −3 ms |
-| Toz Bulutu (hızlanan) | 0,95 | +6 ms |
-| Kuzey Rüzgârı, düşük seviye + gürültü | 0,81 | −1 ms |
-| Rastgele ataklar | ortalama güven 0,13 | |
+| Gece Gölü | 0,82 | 0,87 |
+| Kuzey Rüzgârı | 0,85 | 0,88 |
+| Toz Bulutu (hızlanan) | 0,96 | 0,95 |
+| Kuzey Rüzgârı, düşük seviye + gürültü | 0,87 | 0,81 |
+| Rastgele ataklar (ortalama güven) | 0,02 | 0,13 |
+
+Ortanca vuruş hatası her iki yolda ±10 ms içindedir.
+
+**Tarayıcı ölçümü** (`test/system_audio.py`, başka bir oynatıcıda çalan 122 BPM'lik parça, yazılımsal GPU ile çok düşük kare hızında): “Sistem sesi · 122 BPM · güven %99”.
 
 Hatalar çoğunlukla bölüm geçişlerinde, izleyicinin yeni desene uyum sağladığı birkaç vuruşta oluşur.
 

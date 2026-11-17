@@ -1,6 +1,6 @@
 {
   "name": "yanki",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Müziği sinematik, etkileşimli bir görsel dünyaya dönüştüren yüklenebilir uygulama (PWA) — ses analizi, WebGL 2 sahneler, Spotify ve YouTube kütüphanesi.",
   "author": "Esat Taha Polat (https://github.com/tahap0l)",
   "license": "MIT",
@@ -39,6 +39,7 @@
     "test:services": "python3 test/services.py",
     "test:pwa": "python3 test/pwa.py",
     "test:listen": "python3 test/listen.py",
+    "test:system-audio": "xvfb-run -a python3 test/system_audio.py",
     "demos": "node scripts/make-demos.mjs"
   },
   "dependencies": {

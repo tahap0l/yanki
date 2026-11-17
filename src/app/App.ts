@@ -12,7 +12,7 @@ import { loadPrefs, savePrefs, type Prefs } from './prefs';
 import { BeatStrip } from './BeatStrip';
 import { Library } from './Library';
 import { Pwa } from './Pwa';
-import { MicInput, type MicStatus } from '../live/MicInput';
+import { MicInput, type ListenSource, type MicStatus } from '../live/MicInput';
 import { SpotifyAuth } from '../services/spotify/SpotifyAuth';
 import { SpotifyApi } from '../services/spotify/SpotifyApi';
 import { SpotifyPlayback } from '../services/spotify/SpotifyPlayback';
@@ -380,6 +380,9 @@ export class App {
   // ---------------- arayüz ----------------
   private bindUi(): void {
     $('micBtn').addEventListener('click', () => void this.toggleMic());
+    $('listenSystem').addEventListener('click', () => void this.startListening('system'));
+    $('listenMic').addEventListener('click', () => void this.startListening('mic'));
+    if (this.mic.systemSupported) $('micBtn').querySelector('.sub')!.textContent = 'Sistem sesi ya da mikrofon';
     const fileInput = $('fileInput') as HTMLInputElement;
     fileInput.addEventListener('click', () => this.engine.ensureContext());
     fileInput.addEventListener('change', () => {
@@ -549,9 +552,10 @@ export class App {
     if (this.mic.on && !localPlaying) {
       const st = this.mic.tracker.state;
       const sync = this.sampler.frame.sync;
-      if (!st.active) { dot = 'ambient'; txt = 'Dinliyor · müzik bekleniyor'; }
-      else if (sync > 0.5) { dot = 'beat'; txt = `Dinliyor · ${Math.round(st.bpm)} BPM · güven %${Math.round(st.confidence * 100)}`; }
-      else { dot = 'energy'; txt = 'Dinliyor · ritim aranıyor'; }
+      const who = this.mic.source === 'system' ? 'Sistem sesi' : 'Dinliyor';
+      if (!st.active) { dot = 'ambient'; txt = `${who} · müzik bekleniyor`; }
+      else if (sync > 0.5) { dot = 'beat'; txt = `${who} · ${Math.round(st.bpm)} BPM · güven %${Math.round(st.confidence * 100)}`; }
+      else { dot = 'energy'; txt = `${who} · ritim aranıyor`; }
       if (s.kind === 'stream' && this.streamNote) { dot = 'busy'; txt = this.streamNote; }
     }
     else if (s.kind === 'none') { txt = 'Müziği açın ve “Dinle”ye dokunun'; }
@@ -749,15 +753,30 @@ export class App {
   // ---------------- dinleme (mikrofon) ----------------
   private async toggleMic(): Promise<void> {
     if (this.mic.on || this.mic.status === 'starting') { this.mic.stop(); return; }
+    // bilgisayarda: sistem sesi (kulaklıkla da çalışır) ya da mikrofon seçimi
+    if (this.mic.systemSupported) { this.showListenChooser(); return; }
+    await this.startListening('mic');
+  }
+
+  private async startListening(source: ListenSource): Promise<void> {
+    this.closePanels(false);
     const ctx = this.engine.ensureContext();
-    await this.mic.start(ctx);
+    await this.mic.start(ctx, source);
+  }
+
+  private showListenChooser(): void {
+    this.closePanels(false);
+    $('listenPanel').hidden = false;
+    $('micBtn').setAttribute('aria-expanded', 'true');
+    ($('listenSystem') as HTMLElement).focus();
   }
 
   private onMicStatus(st: MicStatus, message?: string): void {
     const b = $('micBtn');
     b.setAttribute('aria-pressed', String(st === 'on'));
     b.classList.toggle('on', st === 'on');
-    b.querySelector('.lbl')!.textContent = st === 'on' ? 'Dinleniyor' : st === 'starting' ? 'Açılıyor…' : 'Dinle';
+    b.querySelector('.lbl')!.textContent = st === 'on' ? (this.mic.source === 'system' ? 'Sistem sesi dinleniyor' : 'Dinleniyor') : st === 'starting' ? 'Açılıyor…' : 'Dinle';
+    b.querySelector('.sub')!.textContent = st === 'on' ? 'Durdurmak için dokunun' : this.mic.systemSupported ? 'Sistem sesi ya da mikrofon' : 'Çalan şarkıya tepki ver';
     if (message) this.toast(message);
     if (st === 'on') { try { localStorage.setItem('yanki.mic', '1'); } catch { /* yoksay */ } this.setCollapsed(true); }
     if (st === 'off' || st === 'denied') { try { localStorage.removeItem('yanki.mic'); } catch { /* yoksay */ } this.sampler.reset(); }
@@ -852,7 +871,7 @@ export class App {
       $('installBtn').setAttribute('aria-expanded', 'false');
       try { if (this.pwa.isIos) { localStorage.setItem('yanki.install.dismissed', '1'); $('installBtn').hidden = true; } } catch { /* yoksay */ }
     }
-    for (const [id, b] of [['settingsPanel', 'settingsBtn'], ['libraryPanel', 'libBtn']]) {
+    for (const [id, b] of [['settingsPanel', 'settingsBtn'], ['libraryPanel', 'libBtn'], ['listenPanel', 'micBtn']]) {
       const wasOpen = !$(id).hidden;
       const hadFocus = $(id).contains(document.activeElement);
       $(id).hidden = true;
@@ -927,7 +946,7 @@ export class App {
 
   private maybeIdle(): void {
     const app = $('app');
-    const panelsOpen = !$('settingsPanel').hidden || !$('libraryPanel').hidden || !$('installPanel').hidden;
+    const panelsOpen = !$('settingsPanel').hidden || !$('libraryPanel').hidden || !$('installPanel').hidden || !$('listenPanel').hidden;
     // yalnız klavye odağı (focus-visible) kontrolleri açık tutar; fare tıklaması tutmaz
     const ae = document.activeElement as HTMLElement | null;
     let kbFocus = false;
