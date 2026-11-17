@@ -1,0 +1,31 @@
+{
+  "id": "./",
+  "name": "Yankı — Müziğin sahnesi",
+  "short_name": "Yankı",
+  "description": "Müziği sinematik, etkileşimli bir görsel dünyaya dönüştürür.",
+  "lang": "tr",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["fullscreen", "standalone"],
+  "orientation": "any",
+  "background_color": "#05070d",
+  "theme_color": "#05070d",
+  "categories": ["music", "entertainment"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "screenshots": [
+    { "src": "screens/genis.jpg", "sizes": "1600x1000", "type": "image/jpeg", "form_factor": "wide", "label": "Kutup Işıkları sahnesi" },
+    { "src": "screens/telefon.jpg", "sizes": "780x1688", "type": "image/jpeg", "form_factor": "narrow", "label": "Telefonda Yıldız Tozu" }
+  ],
+  "shortcuts": [
+    { "name": "Kütüphane", "url": "./?open=library", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Demo parçalar", "url": "./?open=device", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+  ],
+  "launch_handler": { "client_mode": "focus-existing" }
+}
